@@ -41,19 +41,11 @@ def save_excel(data, path):
     def parse_excel_date(val):
         if not val:
             return ""
-        for fmt in (
-            "%d/%m/%Y %H.%M.%S",
-            "%Y-%m-%d %H:%M:%S",
-            "%Y-%m-%d",
-            "%Y/%m/%d",
-            "%d-%m-%Y %H.%M.%S",
-            "%d-%m-%Y",
-        ):
-            try:
-                return datetime.strptime(val, fmt)
-            except Exception:
-                continue
-        return val
+        try:
+            # API return: "2026-02-02T13:21:19.554344+07:00"
+            return datetime.fromisoformat(val.replace("+07:00", ""))
+        except:
+            return val
 
     def parse_date_for_sort(val):
         try:
@@ -71,7 +63,7 @@ def save_excel(data, path):
 
         def key_func(x):
             val = x.get(sort_key, "")
-            if sort_key in ("tgl", "create_at") and val:
+            if sort_key == "Datetime" and val:
                 return parse_date_for_sort(val)
             try:
                 return float(val)
@@ -124,75 +116,21 @@ def save_excel(data, path):
     for row in data_sorted:
         row_no += 1
         row_values = []
-        children = None
-
+        
+        # ✅ LOOP untuk setiap kolom
         for k in keys:
             val = row.get(k, "")
-
-            # Format tanggal
-            if k in ("tgl", "create_at") and val:
+            
+            # Format tanggal untuk kolom Datetime
+            if k == "Datetime" and val:
                 val = parse_excel_date(val)
-
-            # Format angka
-            elif k in ("debit", "kredit") and val:
-                try:
-                    val = float(val)
-                except Exception:
-                    val = 0
-
-            # Expand children
-            if k == "w2ui" and isinstance(val, dict) and "children" in val:
-                children = val["children"]
-                val = ""
+            # Konversi dict/list ke JSON string
             elif isinstance(val, (dict, list)):
                 val = json.dumps(val, ensure_ascii=False)
-
+            
             row_values.append(val)
 
         all_rows.append([row_no] + row_values)
-
-        # ---------------------------
-        # Children rows
-        # ---------------------------
-        if children:
-            parent_faktur = row.get("faktur", "")
-            parent_tgl = row.get("tgl", "")
-            parent_username = row.get("username", "")
-            parent_create = row.get("create_at", "")
-
-            for child in children:
-                child_values = []
-
-                for k in keys:
-                    if k == "w2ui":
-                        child_values.append("")
-                        continue
-
-                    val = child.get(k, "")
-
-                    if not val:
-                        if k == "faktur":
-                            val = parent_faktur
-                        elif k == "tgl":
-                            val = parent_tgl
-                        elif k == "username":
-                            val = parent_username
-                        elif k == "create_at":
-                            val = parent_create
-
-                    if k in ("tgl", "create_at") and val:
-                        val = parse_excel_date(val)
-                    elif k in ("debit", "kredit") and val:
-                        try:
-                            val = float(val)
-                        except Exception:
-                            val = 0
-                    elif isinstance(val, (dict, list)):
-                        val = json.dumps(val, ensure_ascii=False)
-
-                    child_values.append(val)
-
-                all_rows.append([""] + child_values)
 
     # -------------------------------
     # Write rows
@@ -216,12 +154,8 @@ def save_excel(data, path):
             cell = ws.cell(row=row_idx, column=col_idx)
             cell.fill = fill
 
-            if col_name in ("debit", "kredit"):
-                cell.number_format = "#,##0.00"
-            elif col_name == "tgl":
-                cell.number_format = "dd/mm/yyyy"
-            elif col_name == "create_at":
-                cell.number_format = "dd/mm/yyyy hh.mm.ss"
+            if col_name == "Datetime":
+                cell.number_format = "dd/mm/yyyy hh:mm:ss"
 
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = ws.dimensions
@@ -329,14 +263,8 @@ async def main_async(start_date, end_date):
                 "_": 0
             }
 
-            if config.CABANG:
-                params["bsearch[skd_cabang]"] = config.CABANG
-            if config.STATUS:
-                params["bsearch[sstatus]"] = config.STATUS
-
             query = urllib.parse.urlencode(params)
             url = f"{config.API_BASE}?{query}"
-
 
             print(f"⏳ Fetch {day}...")
             result = await page.evaluate(
