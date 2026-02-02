@@ -1,12 +1,12 @@
 # scraper_jurnal_umum_excel.py
-# Versi untuk Excel dengan menu tanggal
+# Versi untuk Excel - Ambil tanggal dari cell Excel
 
 import sys
 import json
 import urllib.parse
 import asyncio
 import os
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 
 from playwright.async_api import async_playwright
 from openpyxl import Workbook
@@ -175,57 +175,6 @@ def save_excel(data, path):
 
 
 # ===============================
-# GET DATE RANGE
-# ===============================
-def get_date_range(choice):
-    today = datetime.now().date()
-
-    if choice == 1:  # Hari ini
-        return str(today), str(today)
-
-    elif choice == 2:  # Kemarin
-        y = today - timedelta(days=1)
-        return str(y), str(y)
-
-    elif choice == 3:  # Bulan ini
-        start = today.replace(day=1)
-        return str(start), str(today)
-
-    elif choice == 4:  # Bulan lalu
-        first_this = today.replace(day=1)
-        last_last = first_this - timedelta(days=1)
-        first_last = last_last.replace(day=1)
-        return str(first_last), str(last_last)
-
-    elif choice == 5:  # Semester ini
-        start = today.replace(month=1 if today.month <= 6 else 7, day=1)
-        return str(start), str(today)
-
-    elif choice == 6:  # Semester lalu
-        if today.month <= 6:
-            year = today.year - 1
-            return str(date(year, 7, 1)), str(date(year, 12, 31))
-        else:
-            year = today.year
-            return str(date(year, 1, 1)), str(date(year, 6, 30))
-
-    elif choice == 7:  # Tahun ini
-        start = today.replace(month=1, day=1)
-        return str(start), str(today)
-
-    elif choice == 8:  # Tahun lalu
-        first_this = today.replace(month=1, day=1)
-        last_last = first_this - timedelta(days=1)
-        first_last = last_last.replace(month=1, day=1)
-        return str(first_last), str(last_last)
-
-    elif choice == 9:  # Custom
-        return None, None
-
-    return str(today), str(today)
-
-
-# ===============================
 # MAIN SCRAPER
 # ===============================
 async def main_async(start_date, end_date):
@@ -306,18 +255,15 @@ async def main_async(start_date, end_date):
 # MAIN
 # ===============================
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python scraper_jurnal_umum_excel.py <choice>")
+    if len(sys.argv) < 4:
+        print("Usage: python scraper.py 9 <start_date> <end_date>")
+        print("Example: python scraper.py 9 2026-02-01 2026-02-28")
         sys.exit(1)
 
     try:
-        choice = int(sys.argv[1])
-
-        if choice == 9:
-            start_date = sys.argv[2]
-            end_date = sys.argv[3]
-        else:
-            start_date, end_date = get_date_range(choice)
+        # Selalu expect 3 parameter: choice(9), start_date, end_date
+        start_date = sys.argv[2]
+        end_date = sys.argv[3]
 
         asyncio.run(main_async(start_date, end_date))
 
