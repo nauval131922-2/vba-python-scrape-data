@@ -1,19 +1,18 @@
 # ===== KONFIGURASI SCRAPER (VERSI SIMPLE) =====
 
 # ========================================
-# 1. KREDENSIAL LOGIN
+# 1. KREDENSIAL LOGIN (ENV)
 # ========================================
-# ===== KREDENSIAL (OBFUSCATED) =====
-import base64
+import os
+from dotenv import load_dotenv
 
-_ENC_USER = "bmF1dmFs"
-_ENC_PASS = "MzEyYWRtaW4y"
+load_dotenv()  # baca file .env
 
-def _decode(val):
-    return base64.b64decode(val).decode("utf-8")
+USERNAME = os.getenv("SCRAPER_USERNAME")
+PASSWORD = os.getenv("SCRAPER_PASSWORD")
 
-USERNAME = _decode(_ENC_USER)
-PASSWORD = _decode(_ENC_PASS)
+if not USERNAME or not PASSWORD:
+    raise ValueError("USERNAME atau PASSWORD belum diset di .env")
 
 
 # ========================================

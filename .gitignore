@@ -1,0 +1,8 @@
+# Environment variables
+.env
+
+# Excel files
+*.xls
+*.xlsx
+*.xlsm
+*.xlsb
