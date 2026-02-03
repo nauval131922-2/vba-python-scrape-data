@@ -3,10 +3,18 @@
 from datetime import datetime
 
 # ========================================
-# 1. KREDENSIAL LOGIN
+# 1. KREDENSIAL LOGIN (ENV)
 # ========================================
-USERNAME = "nauval"
-PASSWORD = "312admin2"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # baca file .env
+
+USERNAME = os.getenv("SCRAPER_USERNAME")
+PASSWORD = os.getenv("SCRAPER_PASSWORD")
+
+if not USERNAME or not PASSWORD:
+    raise ValueError("USERNAME atau PASSWORD belum diset di .env")
 
 # ========================================
 # 2. URL & ENDPOINT
