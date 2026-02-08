@@ -2,7 +2,37 @@ Sub ScrapeData()
     Application.ScreenUpdating = False
     Application.Calculation = xlCalculationManual
     On Error GoTo ErrorHandler
-
+    
+    'setting data
+    'ws dest
+    Dim wsDest As Worksheet
+    Set wsDest = SheetMasterSpesifikasi
+    
+    'kolom lastrow sheet dst
+    Dim kolomLastRowDest As String
+    kolomLastRowDest = "a"
+    
+    'baris pertama sheet dest
+    Dim barisPertamaDest As Long
+    barisPertamaDest = 1
+    
+    'folder python
+    Dim folderPython As String
+    folderPython = "Master Spesifikasi"
+    
+    'kolom paste sheet dest
+    Dim kolomPasteSheetDest As String
+    kolomPasteSheetDest = "a"
+    
+    'kolom lastrow data src
+    Dim kolomLastRowDataSrc As String
+    kolomLastRowDataSrc = "a"
+    
+    'nama table sheet dest
+    Dim namaTableSheetDest As String
+    namaTableSheetDest = "TableMasterSpesifikasi"
+    
+    
     ' ========================================
     ' CEK FILE SUDAH DISIMPAN
     ' ========================================
@@ -11,37 +41,32 @@ Sub ScrapeData()
         GoTo CleanUp
     End If
 
-    Dim wsTarget As Worksheet
-    Set wsTarget = ActiveSheet
-
     ' ========================================
     ' CLEAR SHEET
     ' ========================================
-    Dim lastRowDst As Long
-    lastRowDst = Cells(Rows.Count, "B").End(xlUp).Row
-    Dim barisDst As Long
-    barisDst = 5
+    Dim lastRowDest As Long
+    lastRowDest = wsDest.Cells(Rows.Count, kolomLastRowDest).End(xlUp).Row
     
     ' Clear data lama (dynamic column)
-    If lastRowDst > barisDst Then
+    If lastRowDest > barisPertamaDest Then
         Dim lastColDst As Long
-        lastColDst = wsTarget.Cells(barisDst, Columns.Count).End(xlToLeft).Column
-        wsTarget.Range(wsTarget.Cells(barisDst, 2), wsTarget.Cells(lastRowDst, lastColDst)).Clear
+        lastColDst = wsDest.Cells(barisPertamaDest, Columns.Count).End(xlToLeft).Column
+        wsDest.Range(wsDest.Cells(barisPertamaDest, kolomLastRowDest), wsDest.Cells(lastRowDest, lastColDst)).Clear
     End If
 
     ' ========================================
     ' PATH SETUP
     ' ========================================
     Dim wbPath As String
-    wbPath = ThisWorkbook.Path
+    wbPath = ThisWorkbook.path
 
     Dim pythonPath As String
     Dim scriptPath As String
     Dim outputXlsx As String
 
     pythonPath = "python"
-    scriptPath = wbPath & "\Python\Master Spesifikasi\scraper.py"
-    outputXlsx = wbPath & "\Python\Master Spesifikasi\temp.xlsx"
+    scriptPath = wbPath & "\Python\" & folderPython & "\scraper.py"
+    outputXlsx = wbPath & "\Python\" & folderPython & "\temp.xlsx"
 
     ' Cek script Python
     If Dir(scriptPath) = "" Then
@@ -86,17 +111,17 @@ Sub ScrapeData()
     Dim wbSrc As Workbook
     Set wbSrc = Workbooks.Open(outputXlsx, ReadOnly:=True)
     wbSrc.Sheets(1).UsedRange.Copy
-    wsTarget.Range("B" & barisDst).PasteSpecial xlPasteAll
+    wsDest.Range(kolomPasteSheetDest & barisPertamaDest).PasteSpecial xlPasteAll
     Application.CutCopyMode = False
     wbSrc.Close SaveChanges:=False
 
     ' ========================================
     ' FORMAT SHEET
     ' ========================================
-    wsTarget.UsedRange.Columns.AutoFit
+    wsDest.UsedRange.Columns.AutoFit
 
     Dim col As Range
-    For Each col In wsTarget.UsedRange.Columns
+    For Each col In wsDest.UsedRange.Columns
         If col.ColumnWidth > 50 Then col.ColumnWidth = 50
     Next col
 
@@ -104,22 +129,22 @@ Sub ScrapeData()
     ' BUAT TABLE
     ' ========================================
     Dim lastRowDataScrape As Long
-    lastRowDataScrape = wsTarget.Cells(wsTarget.Rows.Count, "D").End(xlUp).Row
+    lastRowDataScrape = wsDest.Cells(wsDest.Rows.Count, kolomLastRowDataSrc).End(xlUp).Row
 
     ' Hapus table lama jika ada
     On Error Resume Next
-    wsTarget.ListObjects("TableMasterSpesifikasi").Delete
+    wsDest.ListObjects(namaTableSheetDest).Delete
     On Error GoTo ErrorHandler
 
     ' Buat table baru
     Dim lastColTable As Long
-    lastColTable = wsTarget.Cells(barisDst, Columns.Count).End(xlToLeft).Column
+    lastColTable = wsDest.Cells(barisPertamaDest, Columns.Count).End(xlToLeft).Column
     
-    wsTarget.ListObjects.Add( _
+    wsDest.ListObjects.Add( _
         xlSrcRange, _
-        wsTarget.Range(wsTarget.Cells(barisDst, 2), wsTarget.Cells(lastRowDataScrape, lastColTable)), _
+        wsDest.Range(wsDest.Cells(barisPertamaDest, kolomPasteSheetDest), wsDest.Cells(lastRowDataScrape, lastColTable)), _
         , xlYes _
-    ).Name = "TableMasterSpesifikasi"
+    ).Name = namaTableSheetDest
 
     ' ========================================
     ' COPY FORMULA DARI MASTER (jika ada)
@@ -128,10 +153,10 @@ Sub ScrapeData()
     If Not Sheets("Master") Is Nothing Then
         ' Copy master
         Sheets("Master").Range("i22:i22").Copy
-        Sheets("Master Spesifikasi").Range("i" & barisDst).PasteSpecial xlPasteAll
+        Sheets("Master Spesifikasi").Range("i" & barisPertamaDest).PasteSpecial xlPasteAll
         Application.CutCopyMode = False
         
-        Sheets("Master Spesifikasi").Range("i" & barisDst + 1).FormulaR1C1 = _
+        Sheets("Master Spesifikasi").Range("i" & barisPertamaDest + 1).FormulaR1C1 = _
             Sheets("Master").Range("i23").FormulaR1C1
         
         
@@ -139,7 +164,7 @@ Sub ScrapeData()
         
         ' Format tanggal
         With Sheets("Master Spesifikasi")
-            .Range("i" & barisDst + 1, .Cells(.Rows.Count, "I").End(xlUp)).NumberFormat = _
+            .Range("i" & barisPertamaDest + 1, .Cells(.Rows.Count, "I").End(xlUp)).NumberFormat = _
                 "dd mmm yyyy"
 
         End With
@@ -149,8 +174,8 @@ Sub ScrapeData()
     ' Hapus file hasil
     Kill outputXlsx
 
-    MsgBox "Data berhasil diperbarui!", _
-           vbInformation
+'    MsgBox "Data berhasil diperbarui!", _
+'           vbInformation
 
 CleanUp:
     Application.ScreenUpdating = True
