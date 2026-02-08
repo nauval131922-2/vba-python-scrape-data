@@ -95,6 +95,24 @@ def save_excel(data, path):
 
     wb.save(path)
 
+def sort_records(records, sort_rules):
+    if not sort_rules or not records:
+        return records
+
+    # Sort dari prioritas TERAKHIR ke AWAL
+    # (karena Python sort itu stable)
+    for field, direction in reversed(sort_rules):
+        reverse = str(direction).lower() == "desc"
+
+        records.sort(
+            key=lambda x: (
+                x.get(field) is None,
+                x.get(field)
+            ),
+            reverse=reverse
+        )
+
+    return records
 
 # ===============================
 # MAIN SCRAPER
@@ -144,6 +162,9 @@ async def main():
                     break
 
         print(f"📊 Total records: {len(records)}")
+
+        print("🔃 Sorting data (Python)...")
+        records = sort_records(records, config.SORT_BY)
 
         print("💾 Menyimpan ke Excel...")
         save_excel(records, EXCEL_PATH)
