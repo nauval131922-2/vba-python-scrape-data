@@ -42,6 +42,19 @@ EXTRA_REQUEST = {
 }
 
 # ========================================
+# 4A. SORTING (PYTHON SIDE)
+# ========================================
+# Urutan sort dari prioritas tertinggi ke terendah
+# format:
+# ("nama_kolom", "asc" / "desc")
+
+SORT_BY = [
+    ("kode", "asc"),
+    # ("created_at", "desc"),
+]
+
+
+# ========================================
 # 5. STYLING EXCEL
 # ========================================
 # Warna zebra style (hex kode tanpa #)
