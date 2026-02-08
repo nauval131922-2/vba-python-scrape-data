@@ -8,13 +8,11 @@ from dotenv import load_dotenv
 
 load_dotenv()  # baca file .env
 
-# USERNAME = os.getenv("SCRAPER_USERNAME")
-USERNAME = "nauval"
-# PASSWORD = os.getenv("SCRAPER_PASSWORD")
-PASSWORD = "312admin2"
+USERNAME = os.getenv("SCRAPER_USERNAME")
+PASSWORD = os.getenv("SCRAPER_PASSWORD")
 
-# if not USERNAME or not PASSWORD:
-#     raise ValueError("USERNAME atau PASSWORD belum diset di .env")
+if not USERNAME or not PASSWORD:
+    raise ValueError("USERNAME atau PASSWORD belum diset di .env")
 
 
 # ========================================
